@@ -72,7 +72,7 @@ from sales;
 
 
 -- ----------------------------- exploratory data analysis ---------------------------------------------
-
+-- ----------------------------- products analysis -------------------------------------------------
 -- how many unique cities are in the data?
 select count(distinct city)
 from sales;
@@ -178,6 +178,40 @@ order by avg_rating desc
 -- sports and travel: 6.92
 -- electronic accessories: 6.92
 -- home and lifestyle: 6.84
+
+-- ----------------------------- sales analysis -------------------------------------------------
+
+-- find number of sales made in each time of the day per weekday
+select time_of_day, count(*) as total_sales
+from sales
+where day_name = "Monday" -- replace Monday with all weekdays to find sale for each time per weekday
+group by time_of_day
+order by total_sales desc;
+
+-- which customer type brings the most revenue?
+select customer_type, avg(total) as avg_total, sum(total) as total_revenue
+from sales
+group by customer_type
+order by total_revenue desc;
+-- memberr type brings most revenue (avg: 327.79, total_revenue: 164223)
+
+-- which city has the largest VAT?
+select city, round(avg(vat), 2) as avg_vat
+from sales
+group by city
+order by avg_vat desc;
+-- naypyitaw has the largest average VAT: 16.05
+
+-- which customer type pays the most in vat?
+select customer_type, round(avg(vat), 2) as avg_vat
+from sales
+group by customer_type
+order by avg_vat desc;
+-- member type pays the most in vat: 15.61
+
+
+
+
 
 select *
 from sales;
