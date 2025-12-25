@@ -144,9 +144,6 @@ group by product_line
 order by avg_vat desc;
 -- the product_line with the largest vat is Home and Lifestyle with an of 16.03 vat
 
--- fetch each product_line and add a column to those product line showing "good", "bad". good if its greater thn average sales
-select product_line;
-
 -- which branch sold more products than average product sold?
 select avg(quantity)
 from sales;
