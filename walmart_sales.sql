@@ -228,14 +228,69 @@ from sales;
 -- there are 3 payment_methods: (credit_card, e-wallet, cash)
 
 -- what is the most common customer type?
-select customer_type, count(*)
+select customer_type, count(customer_type) as cust_type
 from sales
 group by customer_type
-order by count(*) desc;
+order by cust_type desc;
 -- most common customer type is member at 501
 
 -- which customer type buys the most?
+select customer_type, count(*) as cust_count
+from sales
+group by customer_type
+order by cust_count desc;
+-- member customer type buys the most
 
+-- what is the gender of most customers?
+select gender, count(*) as gender_count
+from sales
+group by gender
+order by gender_count desc;
+-- female is the gender of most customers(female: 501, male: 499)
+
+-- what is the gender distribution per branch?
+select branch, gender, count(*) as gender_count
+from sales
+where branch ="C" -- --> replaced with A and B to find other branch
+group by branch, gender;
+-- branch A: male = 179, female = 161
+-- branch B: male = 170, female = 162
+-- branch C: male = 150, female = 178
+
+-- which time of the day do customers give most ratings?
+select time_of_day, round(avg(rating), 2) as rating
+from sales
+group by time_of_day
+order by rating desc
+;
+-- afternoons has the highest average ration of 7:03 (morning: 6.96, evening: 6.93)
+
+-- which time of the day do customers give most ratings per branch
+select branch, time_of_day, round(avg(rating), 2) as rating
+from sales
+where branch = "A" -- --> replace with B, C for other branches
+group by branch, time_of_day
+order by rating desc;
+-- branch A: afternoon (7.19 rating)
+-- branch B: morning (6.89 rating)
+-- branch C: evening (7.12 rating)
+
+-- which day of the week has the best average rating
+select day_name, round(avg(rating), 2) as rating
+from sales
+group by day_name
+order by rating desc;
+-- monday has the best average rating of (7.15)
+
+-- which day of the week has the best average rating
+select branch, day_name, round(avg(rating), 2) as rating
+from sales
+where branch = "C" -- --> to be replaced with other branches
+group by day_name
+order by rating desc;
+-- branch A: friday (7.31 rating)
+-- branch B: monday (7.34 rating)
+-- branch C: friday (7.28 rating)
 
 select *
 from sales;
