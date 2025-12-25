@@ -209,8 +209,32 @@ group by customer_type
 order by avg_vat desc;
 -- member type pays the most in vat: 15.61
 
+-- ----------------------------- customer analysis -------------------------------------------------
 
+-- how many unique customers does the data have?
+select count(distinct customer_type)
+from sales;
 
+select distinct customer_type
+from sales;
+-- there is 2 distinct customer type (normal, member)
+
+-- how many unique payment methods does the data have?
+select count(distinct payment_method)
+from sales;
+
+select distinct payment_method
+from sales;
+-- there are 3 payment_methods: (credit_card, e-wallet, cash)
+
+-- what is the most common customer type?
+select customer_type, count(*)
+from sales
+group by customer_type
+order by count(*) desc;
+-- most common customer type is member at 501
+
+-- which customer type buys the most?
 
 
 select *
