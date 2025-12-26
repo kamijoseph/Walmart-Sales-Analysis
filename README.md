@@ -1,33 +1,26 @@
-Below are the **two requested sections only**, structured exactly as specified.
-
----
-
-# README.md
+# Walmart Sales Analysis
 
 ## Project Overview
 
-This project analyzes transactional sales data from a Walmart-like retail dataset using **SQL (MySQL-compatible)**.
-The goal is threefold:
+This project performs an end-to-end **SQL-based exploratory data analysis (EDA)** on a retail sales dataset modeled after Walmart transactions.
+The analysis follows a structured pipeline:
 
-1. **Schema definition** – create a normalized, query-friendly sales table.
-2. **Feature engineering** – derive temporal features (time of day, weekday, month) directly in SQL to enrich analysis.
-3. **Exploratory Data Analysis (EDA)** – answer business questions around products, sales performance, customers, revenue, VAT, and ratings using aggregate SQL queries.
+1. Database and schema definition
+2. Feature engineering directly in SQL
+3. Business-driven analytical queries across products, sales, customers, revenue, VAT, and ratings
 
-The workflow follows a realistic analytics pipeline: raw data → engineered features → descriptive insights.
+All transformations and insights are derived **in-database**, ensuring reproducibility and analytical rigor.
 
 ---
 
 ## Database & Table Setup
 
-### Database creation
+A relational database (`salesDataWalmart`) is created to store transactional sales data.
+The `sales` table captures invoice-level details including pricing, quantity, customer attributes, temporal fields, and profitability metrics.
 
 ```sql
 create database if not exists salesDataWalmart;
 ```
-
-### Sales table schema
-
-The `sales` table stores transactional-level data with pricing, customer, time, and profitability fields.
 
 ```sql
 create table if not exists sales (
@@ -55,30 +48,9 @@ create table if not exists sales (
 
 ## Feature Engineering
 
-Feature engineering is performed **in-database** to avoid recomputation and keep analysis reproducible.
+### What time of day did each sale occur?
 
-### 1. Time of Day
-
-Logic:
-
-* Morning: before 12:00
-* Afternoon: before 16:00
-* Evening: otherwise
-
-Exploration:
-
-```sql
-select
-    sale_time,
-    case
-        when sale_time < '12:00:00' then 'morning'
-        when sale_time < '16:00:00' then 'afternoon'
-        else 'evening'
-    end as time_of_day
-from sales;
-```
-
-Schema update and persistence:
+Sales are categorized into **morning, afternoon, and evening** based on transaction time.
 
 ```sql
 alter table sales add column time_of_day varchar(20);
@@ -91,9 +63,12 @@ set time_of_day = case
 end;
 ```
 
+**Finding:**
+Afternoon transactions dominate sales volume and tend to receive higher customer ratings.
+
 ---
 
-### 2. Day of Week
+### What day of the week did each sale occur?
 
 ```sql
 alter table sales add column day_name varchar(10);
@@ -102,9 +77,12 @@ update sales
 set day_name = dayname(sale_date);
 ```
 
+**Finding:**
+Weekday-based patterns reveal rating and sales concentration differences across branches.
+
 ---
 
-### 3. Month Name
+### What month did each sale occur?
 
 ```sql
 alter table sales add column month_name varchar(12);
@@ -113,35 +91,52 @@ update sales
 set month_name = monthname(sale_date);
 ```
 
-These engineered columns enable time-based aggregation without repeated function calls.
+**Finding:**
+January leads in both revenue and cost of goods sold (COGS).
 
 ---
 
-## Exploratory Data Analysis (EDA)
+## Product & Location Analysis
 
-### Product & Location Analysis
-
-**Unique cities**
+### How many unique cities are in the data?
 
 ```sql
 select count(distinct city) from sales;
 select distinct city from sales;
 ```
 
-**Branch per city**
+**Finding:**
+There are **3 cities**: Yangon, Naypyitaw, and Mandalay.
+
+---
+
+### In which city is every branch?
 
 ```sql
 select distinct city, branch from sales;
 ```
 
-**Unique product lines**
+**Finding:**
+
+* Yangon → Branch A
+* Mandalay → Branch B
+* Naypyitaw → Branch C
+
+---
+
+### How many unique product lines does the data have?
 
 ```sql
 select count(distinct product_line) from sales;
 select distinct product_line from sales;
 ```
 
-**Most common payment method**
+**Finding:**
+There are **6 unique product lines**.
+
+---
+
+### What is the most common payment method?
 
 ```sql
 select payment_method, count(*) as cnt
@@ -150,7 +145,12 @@ group by payment_method
 order by cnt desc;
 ```
 
-**Most selling product line**
+**Finding:**
+**E-wallet** is the most frequently used payment method.
+
+---
+
+### What is the most selling product line?
 
 ```sql
 select product_line, count(*) as cnt
@@ -159,11 +159,14 @@ group by product_line
 order by cnt desc;
 ```
 
+**Finding:**
+**Fashion accessories** has the highest number of transactions.
+
 ---
 
-### Revenue & Cost Analysis
+## Revenue & Cost Analysis
 
-**Total revenue by month**
+### What is the total revenue by month?
 
 ```sql
 select month_name, sum(total) as total_revenue
@@ -172,7 +175,15 @@ group by month_name
 order by total_revenue desc;
 ```
 
-**Month with highest COGS**
+**Finding:**
+
+* January: highest revenue
+* March: second
+* February: lowest
+
+---
+
+### What month had the largest COGS?
 
 ```sql
 select month_name, sum(cogs) as cogs
@@ -181,7 +192,12 @@ group by month_name
 order by cogs desc;
 ```
 
-**Revenue by product line**
+**Finding:**
+January incurs the highest operational cost.
+
+---
+
+### What product line has the largest revenue?
 
 ```sql
 select product_line, sum(total) as total_revenue
@@ -190,7 +206,12 @@ group by product_line
 order by total_revenue desc;
 ```
 
-**Revenue by city**
+**Finding:**
+**Food and beverages** generate the most revenue overall.
+
+---
+
+### What is the city with the largest revenue?
 
 ```sql
 select city, sum(total) as total_revenue
@@ -199,7 +220,12 @@ group by city
 order by total_revenue desc;
 ```
 
-**Highest VAT by product line**
+**Finding:**
+**Naypyitaw** leads all cities in total revenue.
+
+---
+
+### What is the product line with the largest VAT?
 
 ```sql
 select product_line, avg(vat) as avg_vat
@@ -208,17 +234,18 @@ group by product_line
 order by avg_vat desc;
 ```
 
+**Finding:**
+**Home and lifestyle** has the highest average VAT.
+
 ---
 
-### Sales Volume Analysis
+## Sales Volume Analysis
 
-**Average quantity sold**
+### Which branch sold more products than the average product sold?
 
 ```sql
 select avg(quantity) from sales;
 ```
-
-**Branches selling above average**
 
 ```sql
 select branch, sum(quantity) as qty
@@ -227,7 +254,12 @@ group by branch
 having sum(quantity) > (select avg(quantity) from sales);
 ```
 
-**Most common product line by gender**
+**Finding:**
+All branches (A, B, C) sold quantities above the overall average.
+
+---
+
+### What is the most common product line by gender?
 
 ```sql
 select gender, product_line, count(*) as gender_count
@@ -236,7 +268,12 @@ group by gender, product_line
 order by gender_count desc;
 ```
 
-**Average rating per product line**
+**Finding:**
+Purchase preferences vary by gender, with fashion and food-related products dominating.
+
+---
+
+### What is the average rating of each product line?
 
 ```sql
 select product_line, round(avg(rating), 2) as avg_rating
@@ -245,11 +282,14 @@ group by product_line
 order by avg_rating desc;
 ```
 
+**Finding:**
+**Food and beverages** receive the highest average ratings.
+
 ---
 
-### Time-Based Sales Analysis
+## Sales & Customer Analysis
 
-**Sales per time of day per weekday**
+### Find number of sales made in each time of the day per weekday
 
 ```sql
 select time_of_day, count(*) as total_sales
@@ -259,20 +299,26 @@ group by time_of_day
 order by total_sales desc;
 ```
 
+**Finding:**
+Afternoon sales dominate weekdays, particularly Mondays.
+
 ---
 
-### Customer & VAT Analysis
-
-**Revenue by customer type**
+### Which customer type brings the most revenue?
 
 ```sql
-select customer_type, avg(total) as avg_total, sum(total) as total_revenue
+select customer_type, avg(total), sum(total) as total_revenue
 from sales
 group by customer_type
 order by total_revenue desc;
 ```
 
-**VAT by city**
+**Finding:**
+**Members** generate significantly more revenue than normal customers.
+
+---
+
+### Which city has the largest VAT?
 
 ```sql
 select city, round(avg(vat), 2) as avg_vat
@@ -281,100 +327,99 @@ group by city
 order by avg_vat desc;
 ```
 
-**VAT by customer type**
-
-```sql
-select customer_type, round(avg(vat), 2) as avg_vat
-from sales
-group by customer_type
-order by avg_vat desc;
-```
+**Finding:**
+Naypyitaw has the highest average VAT.
 
 ---
 
-### Customer Demographics
-
-**Customer types**
+### Which customer type pays the most VAT?
 
 ```sql
-select count(distinct customer_type) from sales;
-select distinct customer_type from sales;
-```
-
-**Payment methods**
-
-```sql
-select count(distinct payment_method) from sales;
-select distinct payment_method from sales;
-```
-
-**Most common customer type**
-
-```sql
-select customer_type, count(*) as cust_type
+select customer_type, round(avg(vat), 2)
 from sales
 group by customer_type
-order by cust_type desc;
+order by avg(vat) desc;
 ```
 
-**Gender distribution**
-
-```sql
-select gender, count(*) as gender_count
-from sales
-group by gender
-order by gender_count desc;
-```
-
-**Gender per branch**
-
-```sql
-select branch, gender, count(*) as gender_count
-from sales
-where branch = 'C'
-group by branch, gender;
-```
+**Finding:**
+Member customers pay more VAT on average.
 
 ---
 
-### Ratings Analysis
+## Customer & Ratings Analysis
 
-**Ratings by time of day**
+### What is the gender of most customers?
 
 ```sql
-select time_of_day, round(avg(rating), 2) as rating
+select gender, count(*) from sales
+group by gender;
+```
+
+**Finding:**
+The dataset is nearly balanced, with **slightly more female customers**.
+
+---
+
+### Which time of the day do customers give most ratings?
+
+```sql
+select time_of_day, round(avg(rating), 2)
 from sales
 group by time_of_day
-order by rating desc;
+order by avg(rating) desc;
 ```
 
-**Ratings by time of day per branch**
+**Finding:**
+Afternoon purchases receive the highest ratings.
+
+---
+
+### Which time of the day do customers give most ratings per branch?
 
 ```sql
-select branch, time_of_day, round(avg(rating), 2) as rating
+select branch, time_of_day, round(avg(rating), 2)
 from sales
 where branch = 'A'
 group by branch, time_of_day
-order by rating desc;
+order by avg(rating) desc;
 ```
 
-**Ratings by weekday**
+**Finding:**
+
+* Branch A: Afternoon
+* Branch B: Morning
+* Branch C: Evening
+
+---
+
+### Which day of the week has the best average rating?
 
 ```sql
-select day_name, round(avg(rating), 2) as rating
+select day_name, round(avg(rating), 2)
 from sales
 group by day_name
-order by rating desc;
+order by avg(rating) desc;
 ```
 
-**Ratings by weekday per branch**
+**Finding:**
+Monday has the highest overall ratings.
+
+---
+
+### Which day of the week has the best average rating per branch?
 
 ```sql
-select branch, day_name, round(avg(rating), 2) as rating
+select branch, day_name, round(avg(rating), 2)
 from sales
 where branch = 'C'
-group by day_name
-order by rating desc;
+group by branch, day_name
+order by avg(rating) desc;
 ```
+
+**Finding:**
+
+* Branch A: Friday
+* Branch B: Monday
+* Branch C: Friday
 
 ---
