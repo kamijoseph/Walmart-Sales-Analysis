@@ -11,12 +11,15 @@ The analysis follows a structured pipeline:
 
 All transformations and insights are derived **in-database**, ensuring reproducibility and analytical rigor.
 
+** The projects answers the questions located in the tasks.md file
+
 ---
 
 ## Database & Table Setup
 
 A relational database (`salesDataWalmart`) is created to store transactional sales data.
 The `sales` table captures invoice-level details including pricing, quantity, customer attributes, temporal fields, and profitability metrics.
+The table is then populated from the data which can be found in the resources folder for reproduction.
 
 ```sql
 create database if not exists salesDataWalmart;
